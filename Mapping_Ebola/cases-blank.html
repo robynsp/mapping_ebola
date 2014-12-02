@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+/* Style everything here */
+
+body {
+  font-family: Arial;
+}
+
+.population-8, .population-7, .population-6, .population-5, .population-4 {
+  display: none;
+}
+
+.city-NG {
+  display: none;
+}
+
+svg {
+  background: #bbccdc;
+  border: solid #333 1px;
+}
+
+.district {
+  fill: #d3d3d3;
+  stroke: #ccc;
+}
+
+.country {
+  fill: #e8e8e8;
+  stroke: #ccc;
+}
+
+.boundary {
+  fill: none;
+  stroke: #777;
+}
+
+.label {
+    text-anchor: middle;
+    font-size: 8px;
+}
+
+/* 
+.cases-0 {
+    fill: #ffffff;
+}
+
+.cases-2 {
+    fill: #e78788;
+}
+ */
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script>
+
+var width = 660,
+    height = 660;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+    
+var case_data = d3.map();
+// case_data.set("Boke", 55);
+// case_data.set("Lola", 1);
+// console.log(case_data);
+
+queue()
+    .defer(d3.json, "districts.topojson")
+    .defer(d3.csv, "cases-with-population.csv", function(d) {
+        var count = parseInt(d.Cases);
+        var name = d.Name;
+        case_data.set(name, count);
+        console.log(case_data);
+    })
+    .await( ready );
+
+function ready(error, africa) {
+  if (error) return console.error(error);
+
+  var count_min = d3.min(case_data.values());
+  var count_max = d3.max(case_data.values());
+
+  var gradient_scale = d3.scale.sqrt()
+      .domain([0, count_max])
+      .range(['white', 'red']);
+
+  var projection = d3.geo.mercator()
+      .center([-11, 9])
+      .scale(3500)
+      .translate([width / 2, height / 2]);
+
+  var path = d3.geo.path().projection(projection);
+  
+  var countries = topojson.feature(africa, africa.objects.countries);
+
+  svg.selectAll(".country")
+      .data(countries.features)
+      .enter()
+      .append("path")
+      .attr('class', 'country')
+      .attr("d", path);
+  
+  var districts = topojson.feature(africa, africa.objects.districts);
+  
+  svg.selectAll(".district")
+      .data(districts.features)
+      .enter()
+      .append("path")
+      .attr('class', 'district')
+      .style("fill", function(d) {
+        var name = d.properties.name;
+        var count = case_data.get(name);
+        return gradient_scale(count);
+      })
+      .attr("d", path);
+
+
+  // Select the countries/features we're interested in using filter
+  var outlined_countries = countries.features.filter( function(d) {
+    return ["Guinea", "Sierra Leone", "Liberia"].indexOf(d.properties.NAME_LONG) != -1;
+  });
+    
+  svg.selectAll(".boundary")
+      .data(outlined_countries)
+      .enter()
+      .append("path")
+      .attr('class', 'boundary')
+      .attr("d", path);
+      
+  svg.selectAll(".label")
+      .data(districts.features)
+      .enter()
+      .append("text")
+      .attr('class', 'label')
+      .attr('transform', function(d) {
+        return "translate(" + path.centroid(d) + ")";
+    })
+      .text(function(d) {
+        var name = d.properties.name;
+        var count = case_data.get(name);
+        return count;
+      
+    });
+}
+</script>
+</body>

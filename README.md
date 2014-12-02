@@ -1,0 +1,1 @@
+This d3 project was done using Caitlin Rivers github data on Ebola, found here: https://github.com/cmrivers/ebola. The project uses this data to map the Ebola trends coming out of West Africa. The d3 visualizations were made in Jonathan Soma's class during my time in the Lede Program at Columbia University.

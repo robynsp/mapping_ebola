@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+/* Style everything here */
+
+.population-8, .population-7, .population-6, .population-5, .population-4 {
+  display: none;
+}
+
+.city-NG {
+  display: none;
+}
+
+.country-label {
+  text-transform: uppercase;
+  font-family: Arial;
+  fill: #999;
+  font-size: 10px;
+}
+
+.province-label {
+  text-transform: uppercase;
+  font-family: Arial;
+  fill: #999;
+  font-size: 2px;
+}
+
+.country {
+  fill: #dedede;
+  stroke: #ffffff;
+}
+
+.province {
+   fill: #fec1c1;
+   stroke: #ffffff;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+
+var width = 960,
+    height = 1160;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("africa.json", function(error, africa) {
+  if (error) return console.error(error);
+  
+  console.log(africa);
+
+    var countries = topojson.feature(africa, africa.objects.countries);
+
+    var provinces = topojson.feature(africa, africa.objects.provinces);
+
+    var cities = topojson.feature(africa, africa.objects.cities);
+
+    var projection = d3.geo.mercator()
+        .center([10, -5])
+        .rotate([4.4, 0])
+        .scale(400)
+        .translate([width / 2, height / 2]);
+  
+    var path = d3.geo.path().projection(projection);
+    
+  svg.selectAll(".country")
+      .data(countries.features)
+      .enter()
+      .append("path")
+      .attr('class', 'country')
+      .attr("d", path);
+  
+  svg.selectAll(".province")
+        .data(provinces.features)
+        .enter()
+        .append("path")
+        .attr("class", 'province')
+        .attr("d", path);
+        
+   svg.selectAll(".city")
+        .data(cities.features)
+        .enter()
+        .append("path")
+        .attr("class", function(d) { 
+            console.log(d);
+            return "city population-" + d.properties.SCALERANK + " city-" + d.properties.ISO_A2; 
+        })
+        .attr("d", path);
+              
+  
+svg.selectAll(".country-label")
+    .data(countries.features)
+    .enter().append("text")
+    .attr("class", 'country-label')
+    .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+    .text(function(d) {
+      return d.properties.NAME_LONG;
+    });
+
+svg.selectAll(".province-label")
+    .data(provinces.features)
+    .enter().append("text")
+    .attr("class", 'province-label')
+    .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+    .text(function(d) {
+        console.log(d);
+      return d.properties.name;
+    });
+  
+  // It looks like we've gotten pretty far, but frankly this map just isn't good enough!
+  
+  // Let's use SVG Crowbar and edit it in a vector program to make it look nicer. Try out
+  // http://editor.method.ac, it seems to work well. Move around some labels, change
+  // what you want to change, export to PNG and send it on over to me. Include this file, too.
+
+});
+
+</script>
+</body>
+
+
+
+
+
+
